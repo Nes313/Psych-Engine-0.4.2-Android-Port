@@ -11,7 +11,6 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
-import flixel.util.FlxStringUtil;
 import lime.utils.Assets;
 import flixel.FlxSubState;
 import flash.text.TextField;
@@ -31,10 +30,10 @@ using StringTools;
 // TO DO: Redo the menu creation system for not being as dumb
 class OptionsState extends MusicBeatState
 {
-	var options:Array<String> = ['Notes', 'Keyboard Controls', 'Mobile Controls', 'Preferences'];
+	var options:Array<String> = ['Notes', 'Controls', 'Preferences'];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
-	public static var menuBG:FlxSprite;		
+	public static var menuBG:FlxSprite;
 
 	override function create() {
 		#if desktop
@@ -61,10 +60,6 @@ class OptionsState extends MusicBeatState
 		}
 		changeSelection();
 
-		#if mobileC
-		addVirtualPad(UP_DOWN, A_B);
-		#end		
-
 		super.create();
 	}
 
@@ -72,11 +67,10 @@ class OptionsState extends MusicBeatState
 		super.closeSubState();
 		ClientPrefs.saveSettings();
 		changeSelection();
-                _virtualpad.alpha = 0.75;
-      	}
+	}
 
 	override function update(elapsed:Float) {
-		super.update(elapsed);		
+		super.update(elapsed);
 
 		if (controls.UI_UP_P) {
 			changeSelection(-1);
@@ -95,18 +89,15 @@ class OptionsState extends MusicBeatState
 				item.alpha = 0;
 			}
 
-                        _virtualpad.alpha = 0;
-
 			switch(options[curSelected]) {
 				case 'Notes':
-				 	openSubState(new NotesSubstate());
-				case 'Keyboard Controls':                                        
-					openSubState(new ControlsSubstate());
-				case 'Mobile Controls':
-					MusicBeatState.switchState(new options.CustomControlsState());					
+					openSubState(new NotesSubstate());
 
-				case 'Preferences':                                        
-					openSubState(new PreferencesSubstate());									
+				case 'Controls':
+					openSubState(new ControlsSubstate());
+
+				case 'Preferences':
+					openSubState(new PreferencesSubstate());
 			}
 		}
 	}
@@ -148,7 +139,7 @@ class NotesSubstate extends MusicBeatSubstate
 
 	var posX = 250;
 	public function new() {
-		super();	
+		super();
 
 		grpNotes = new FlxTypedGroup<FlxSprite>();
 		add(grpNotes);
@@ -189,10 +180,6 @@ class NotesSubstate extends MusicBeatSubstate
 		hsvText = new Alphabet(0, 0, "Hue    Saturation  Brightness", false, false, 0, 0.65);
 		add(hsvText);
 		changeSelection();
-
-		#if mobileC
-		addVirtualPad(FULL, A_B);
-		#end			
 	}
 
 	var changingNote:Bool = false;
@@ -306,7 +293,7 @@ class NotesSubstate extends MusicBeatSubstate
 				});
 				grpNotes.forEachAlive(function(spr:FlxSprite) {
 					spr.alpha = 0;
-				});                
+				});
 				close();
 			}
 			changingNote = false;
@@ -440,7 +427,6 @@ class ControlsSubstate extends MusicBeatSubstate {
 
 	public function new() {
 		super();
-
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 
@@ -475,10 +461,6 @@ class ControlsSubstate extends MusicBeatSubstate {
 			}
 		}
 		changeSelection();
-
-		#if mobileC
-		addVirtualPad(FULL, A_B);
-		#end		
 	}
 
 	var leaving:Bool = false;
@@ -500,9 +482,9 @@ class ControlsSubstate extends MusicBeatSubstate {
 				ClientPrefs.reloadControls();
 				grpOptions.forEachAlive(function(spr:Alphabet) {
 					spr.alpha = 0;
-				});              
+				});
 				close();
-				FlxG.sound.play(Paths.sound('cancelMenu'));	
+				FlxG.sound.play(Paths.sound('cancelMenu'));
 			}
 
 			if(controls.ACCEPT && nextAccept <= 0) {
@@ -727,9 +709,7 @@ class PreferencesSubstate extends MusicBeatSubstate
 	];
 	static var noCheckbox:Array<String> = [
 		'Framerate',
-		'Note Delay',
-		'Scroll Speed',
-		'Note Size'
+		'Note Delay'
 	];
 
 	static var options:Array<String> = [
@@ -746,15 +726,13 @@ class PreferencesSubstate extends MusicBeatSubstate
 		'Ghost Tapping',
 		'Note Delay',
 		'Note Splashes',
-		'Note Size',
-		'Custom Scroll Speed',
-		'Scroll Speed',
 		'Hide HUD',
 		'Hide Song Length',
 		'Flashing Lights',
-		'Camera Zooms',
-		'FPS Counter'
-
+		'Camera Zooms'
+		#if !mobile
+		,'FPS Counter'
+		#end
 	];
 
 	private var grpOptions:FlxTypedGroup<Alphabet>;
@@ -769,7 +747,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 	public function new()
 	{
 		super();
-
 		// avoids lagspikes while scrolling through menus!
 		showCharacter = new Character(840, 170, 'bf', true);
 		showCharacter.setGraphicSize(Std.int(showCharacter.width * 0.8));
@@ -838,10 +815,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 		}
 		changeSelection();
 		reloadValues();
-
-		#if mobileC
-		addVirtualPad(FULL, A_B);
-		#end		
 	}
 
 	var nextAccept:Int = 5;
@@ -873,9 +846,9 @@ class PreferencesSubstate extends MusicBeatSubstate
 			if(showCharacter != null) {
 				showCharacter.alpha = 0;
 			}
-			descText.alpha = 0;                        
+			descText.alpha = 0;
 			close();
-			FlxG.sound.play(Paths.sound('cancelMenu'));	
+			FlxG.sound.play(Paths.sound('cancelMenu'));
 		}
 
 		var usesCheckbox = true;
@@ -938,9 +911,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 					case 'Hide HUD':
 						ClientPrefs.hideHud = !ClientPrefs.hideHud;
 
-					case 'Custom Scroll Speed':
-						ClientPrefs.scroll = !ClientPrefs.scroll;
-
 					case 'Persistent Cached Data':
 						ClientPrefs.imagesPersist = !ClientPrefs.imagesPersist;
 						FlxGraphic.defaultPersist = ClientPrefs.imagesPersist;
@@ -968,16 +938,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 							FlxG.drawFramerate = ClientPrefs.framerate;
 							FlxG.updateFramerate = ClientPrefs.framerate;
 						}
-					case 'Scroll Speed':
-						ClientPrefs.speed += add/10;
-						if(ClientPrefs.speed < 0.5) ClientPrefs.speed = 0.5;
-						else if(ClientPrefs.speed > 4) ClientPrefs.speed = 4;
-
-					case 'Note Size':
-						ClientPrefs.noteSize += add/20;
-						if(ClientPrefs.noteSize < 0.5) ClientPrefs.noteSize = 0.5;
-						else if(ClientPrefs.noteSize > 1.5) ClientPrefs.noteSize = 1.5;
-
 					case 'Note Delay':
 						var mult:Int = 1;
 						if(holdTime > 1.5) { //Double speed after 1.5 seconds holding
@@ -1040,12 +1000,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 				daText = "If unchecked, your mom won't be angry at you.";
 			case 'Violence':
 				daText = "If unchecked, you won't get disgusted as frequently.";
-			case 'Custom Scroll Speed'://for Joseph -bbpanzu
-				daText = "Leave unchecked for chart-dependent scroll speed";
-			case 'Scroll Speed':
-				daText = "Arrow speed (Custom must be enabled)";
-			case 'Note Size':
-				daText = "Size of notes and stuff";
 			case 'Note Splashes':
 				daText = "If unchecked, hitting \"Sick!\" notes won't show particles.";
 			case 'Flashing Lights':
@@ -1118,8 +1072,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 						daValue = ClientPrefs.ghostTapping;
 					case 'Swearing':
 						daValue = ClientPrefs.cursing;
-					case 'Custom Scroll Speed':
-						daValue = ClientPrefs.scroll;
 					case 'Violence':
 						daValue = ClientPrefs.violence;
 					case 'Camera Zooms':
@@ -1143,11 +1095,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 						daText = '' + ClientPrefs.framerate;
 					case 'Note Delay':
 						daText = ClientPrefs.noteOffset + 'ms';
-					case 'Note Size':
-						daText = FlxStringUtil.formatMoney(ClientPrefs.noteSize) + 'x';
-						if (ClientPrefs.noteSize == 0.7) daText += "(Default)";
-					case 'Scroll Speed':
-						daText = ClientPrefs.speed+"";
 				}
 				var lastTracker:FlxSprite = text.sprTracker;
 				text.sprTracker = null;

@@ -20,21 +20,20 @@ import flixel.FlxBasic;
 import flixel.FlxObject;
 import flixel.FlxSprite;
 import openfl.display.BlendMode;
+#if sys
+import sys.FileSystem;
+import sys.io.File;
+#end
 import Type.ValueType;
 import Controls;
 import DialogueBoxPsych;
-import openfl.utils.Assets as OpenFlAssets;
-
-#if desktop
-import Discord;
-#end
 
 using StringTools;
 
 class FunkinLua {
-        public static var Function_Stop = "Function_Stop";
-	public static var Function_Continue = "Function_Continue";
-   
+	public static var Function_Stop = 1;
+	public static var Function_Continue = 0;
+
 	#if LUA_ALLOWED
 	public var lua:State = null;
 	#end
@@ -74,8 +73,8 @@ class FunkinLua {
 		lePlayState = curState;
 
 		// Lua shit
-                set('Function_Stop', "Function_Stop");
-                set('Function_Continue', "Function_Continue");
+		set('Function_Stop', Function_Stop);
+		set('Function_Continue', Function_Continue);
 		set('luaDebugMode', false);
 		set('luaDeprecatedWarnings', true);
 		set('inChartEditor', false);
@@ -115,7 +114,6 @@ class FunkinLua {
 
 		set('rating', 0);
 		set('ratingName', '');
-		set('version', MainMenuState.psychEngineVersion.trim());
 		
 		set('inGameOver', false);
 		set('mustHitSection', false);
@@ -559,7 +557,7 @@ class FunkinLua {
 			lePlayState.addCharacterToList(name, charType);
 		});
 		Lua_helper.add_callback(lua, "precacheImage", function(name:String) {
-
+			Paths.addCustomGraphic(name);
 		});
 		Lua_helper.add_callback(lua, "precacheSound", function(name:String) {
 			CoolUtil.precacheSound(name);
@@ -881,10 +879,10 @@ class FunkinLua {
 			return false;
 		});
 		Lua_helper.add_callback(lua, "startDialogue", function(dialogueFile:String, music:String = null) {
-			var path:String = Paths.json(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
+			var path:String = Paths.modsJson(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
 			luaTrace('Trying to load dialogue: ' + path);
 
-			if(OpenFlAssets.exists(path)) {
+			if(FileSystem.exists(path)) {
 				var shit:DialogueFile = DialogueBoxPsych.parseDialogue(path);
 				if(shit.dialogue.length > 0) {
 					lePlayState.startDialogue(shit, music);
@@ -903,21 +901,15 @@ class FunkinLua {
 		});
 		Lua_helper.add_callback(lua, "startVideo", function(videoFile:String) {
 			#if VIDEOS_ALLOWED
-			if(OpenFlAssets.exists("assets/videos/" + videoFile + ".webm")) 
-			{
+			if(FileSystem.exists(Paths.modsVideo(videoFile))) {
 				lePlayState.startVideo(videoFile);
-			} 
-			else 
-			{
+			} else {
 				luaTrace('Video file not found: ' + videoFile);
 			}
 			#else
-			if(lePlayState.endingSong) 
-			{
+			if(lePlayState.endingSong) {
 				lePlayState.endSong();
-			} 
-			else 
-			{
+			} else {
 				lePlayState.startCountdown();
 			}
 			#end
@@ -1145,9 +1137,6 @@ class FunkinLua {
 			FlxG.sound.music.fadeOut(duration, toValue);
 			luaTrace('musicFadeOut is deprecated! Use soundFadeOut instead.', false, true);
 		});
-
-		//Discord.DiscordClient.addLuaCallbacks(lua);
-
 		call('onCreate', []);
 		#end
 	}
@@ -1294,6 +1283,9 @@ class FunkinLua {
 
 		var result:Null<Int> = Lua.pcall(lua, args.length, 1, 0);
 		if(result != null && resultIsAllowed(lua, result)) {
+			/*var resultStr:String = Lua.tostring(lua, result);
+			var error:String = Lua.tostring(lua, -1);
+			Lua.pop(lua, 1);*/
 			if(Lua.type(lua, -1) == Lua.LUA_TSTRING) {
 				var error:String = Lua.tostring(lua, -1);
 				Lua.pop(lua, 1);
